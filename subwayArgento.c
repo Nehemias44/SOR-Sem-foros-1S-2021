@@ -10,7 +10,13 @@
 
 //creo estructura de semaforos 
 struct semaforos {
-    sem_t sem_mezclar;
+	sem_t sem_cortar;
+	sem_t sem_mezclar;
+	sem_t sem_agregar;
+	sem_t sem_empanar;
+	sem_t sem_cocinar;
+	sem_t sem_hornear;
+	sem_t sem_armar;
 	//poner demas semaforos aqui
 };
 
@@ -28,6 +34,8 @@ struct parametro {
  struct paso pasos_param[8];
 };
 
+void *inprimirAccion(void *date, char *accionIn);
+
 //funcion para imprimir las acciones y los ingredientes de la accion
 void* imprimirAccion(void *data, char *accionIn) {
 	struct parametro *mydata = data;
@@ -40,18 +48,20 @@ void* imprimirAccion(void *data, char *accionIn) {
 		if(strcmp(mydata->pasos_param[i].accion, accionIn) == 0){
 		printf("\tEquipo %d - accion %s \n " , mydata->equipo_param, mydata->pasos_param[i].accion);
 		//calculo la longitud del array de ingredientes
-		int sizeArrayIngredientes = (int)( sizeof(mydata->pasos_param[i].ingredientes) / sizeof(mydata->pasos_param[i].ingredientes[0]) );
+		int sizeArrayIngredientes = (int)( sizeof(mydata->pasos_param[i].ingredientes) /sizeof(mydata->pasos_param[i].ingredientes[0]) );
 		//indice para recorrer array de ingredientes
 		int h;
 		printf("\tEquipo %d -----------ingredientes : ----------\n",mydata->equipo_param); 
 			for(h = 0; h < sizeArrayIngredientes; h++) {
 				//consulto si la posicion tiene valor porque no se cuantos ingredientes tengo por accion 
 				if(strlen(mydata->pasos_param[i].ingredientes[h]) != 0) {
-							printf("\tEquipo %d ingrediente  %d : %s \n",mydata->equipo_param,h,mydata->pasos_param[i].ingredientes[h]);
+					printf("\tEquipo %d ingrediente  %d : %s \n",
+					       mydata->equipo_param,h,mydata->pasos_param[i].ingredientes[h]);
 				}
 			}
 		}
 	}
+	return NULL;
 }
 
 //funcion para tomar de ejemplo
@@ -153,43 +163,53 @@ int main ()
 	int rc;
 	int *equipoNombre1 =malloc(sizeof(*equipoNombre1));
 	int *equipoNombre2 =malloc(sizeof(*equipoNombre2));
-//faltan equipos
+	int *equipoNombre3 =malloc(sizeof(*equipoNombre3));
+	int *equipoNombre4 =malloc(sizeof(*equipoNombre4));	
+	//faltan equipos
   
 	*equipoNombre1 = 1;
 	*equipoNombre2 = 2;
+	*equipoNombre3 = 3;
+	*equipoNombre4 = 4;	
 
 	//creo las variables los hilos de los equipos
 	pthread_t equipo1; 
 	pthread_t equipo2;
-//faltan hilos
+	pthread_t equipo3; 
+	pthread_t equipo4;
   
 	//inicializo los hilos de los equipos
-    rc = pthread_create(&equipo1,                           //identificador unico
+	rc = pthread_create(&equipo1,                      //identificador unico
                             NULL,                          //atributos del thread
-                                ejecutarReceta,             //funcion a ejecutar
-                                equipoNombre1); 
+			    ejecutarReceta,                //funcion a ejecutar
+			    equipoNombre1); 
 
-    rc = pthread_create(&equipo2,                           //identificador unico
+	rc = pthread_create(&equipo2,                      //identificador unico
                             NULL,                          //atributos del thread
-                                ejecutarReceta,             //funcion a ejecutar
-                                equipoNombre2);
-  //faltn inicializaciones
+			    ejecutarReceta,                //funcion a ejecutar
+			    equipoNombre2);
+	rc = pthread_create(&equipo3,                      //identificador unico
+                            NULL,                          //atributos del thread
+			    ejecutarReceta,                //funcion a ejecutar
+			    equipoNombre3);
+	rc = pthread_create(&equipo4,                      //identificador unico
+                            NULL,                          //atributos del thread
+			    ejecutarReceta,                //funcion a ejecutar
+			    equipoNombre4);
 
-
-   if (rc){
-       printf("Error:unable to create thread, %d \n", rc);
-       exit(-1);
-     } 
+	if (rc){
+		printf("Error:unable to create thread, %d \n", rc);
+		exit(-1);
+	} 
 
 	//join de todos los hilos
 	pthread_join (equipo1,NULL);
 	pthread_join (equipo2,NULL);
-//.. faltan joins
+	pthread_join (equipo3,NULL);
+	pthread_join (equipo4,NULL);
 
-
-    pthread_exit(NULL);
+	pthread_exit(NULL);
 }
-
 
 //Para compilar:   gcc subwayArgento.c -o ejecutable -lpthread
 //Para ejecutar:   ./ejecutable
