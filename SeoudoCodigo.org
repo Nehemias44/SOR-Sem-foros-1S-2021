@@ -10,30 +10,33 @@
    - sem_armar = 0
 
 ** Semaforos globales
-   sem_sarten = 1
-   sem_horno = 1
-   sem_salero = 1
+   - sem_sarten = 1
+   - sem_horno = 1
+   - sem_salero = 1
+   - sem_terminar = 1
 
 ** Secuencia
-   cortar("Ajo", " perejil")
-   mezclar("Ajo", "perejil", "huevo")
-   salar("mezcla")
-   agregar("carne")
-   empanar("milanesa")
-   cocinar("milanesa")
-   hornear("pan")
-   cortar("lechuga", "tomate", "cebolla", "pepino")
-   armar("sandwich")
+   - cortar("Ajo", " perejil")
+   - mezclar("Ajo", "perejil", "huevo")
+   - salar("mezcla")
+   - agregar("carne")
+   - empanar("milanesa")
+   - cocinar("milanesa")
+   - hornear("pan")
+   - cortar("lechuga", "tomate", "cebolla", "pepino")
+   - armar("sandwich")
 
 ** Sincronizacion
-   |---------------+----------------+----------------+----------------+----------------+----------------+-----------+----------+---------+---------|
-   |    Paso 1     |     Paso 2     |     Paso 3     |     Paso 4     |     Paso 5     |     Paso 6     |  Paso 7   |  Paso 8  | Paso 9  | Paso 10 |
-   |---------------+----------------+----------------+----------------+----------------+----------------+-----------+----------+---------+---------|
-   |     <c10>     |     <c10>      |     <c10>      |     <c10>      |     <c10>      |     <c10>      |   <c10>   |  <c10>   |  <c10>  |  <c10>  |
-   |               |                |  p(sem_salar)  |                |                | p(sem_cocinar) |           |          |         |         |
-   | p(sem_cortar) | p(sem_mezclar) | p(sem_salero)  | p(sem_agregar) | p(sem_empanar) | p(sem_sarten)  |           |          |         |         |
-   |   cortar()    |   mezclar()    |    salar()     |   agregar()    |   empanar()    |   cocinar()    | hornear() | cortar() | armar() |         |
-   | v(sem_cortar) |  v(sem_salar)  | v(sem_salero)  | v(sem_empanar) | v(sem_cocinar) | v(sem_sarten)  |           |          |         |         |
-   |               |                | v(sem_agregar) |                |                | v(sem_hornear) |           |          |         |         |
+   |----------------+----------------+----------------+----------------+----------------+----------------+----------------+-----------+--------------|
+   |     Paso 1     |     Paso 2     |     Paso 3     |     Paso 4     |     Paso 5     |     Paso 6     |     Paso 7     |  Paso 8   |     Paso     |
+   |----------------+----------------+----------------+----------------+----------------+----------------+----------------+-----------+--------------|
+   |                |                |  p(sem_salar)  |                |                | p(sem_cocinar) | p(sem_hornear) |           |              |
+   | p(sem_cortar)  | p(sem_mezclar) | p(sem_salero)  | p(sem_agregar) | p(sem_empanar) | p(sem_sarten)  |  p(sem_horno)  | p(cortar) | p(sem_armar) |
+   |    cortar()    |   mezclar()    |    salar()     |   agregar()    |   empanar()    |   cocinar()    |   hornear()    | cortar()  |   armar()    |
+   | v(sem_mezclar) |  v(sem_salar)  | v(sem_salero)  | v(sem_empanar) | v(sem_cocinar) | v(sem_sarten)  |  v(sem_horno)  | v(armar)  |              |
+   |                |                | v(sem_agregar) |                |                | v(sem_hornear) | v(sem_cortar)  |           |              |
+   |----------------+----------------+----------------+----------------+----------------+----------------+----------------+-----------+--------------|
    
 
+   
+ 
