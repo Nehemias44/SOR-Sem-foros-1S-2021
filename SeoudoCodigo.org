@@ -1,13 +1,13 @@
 * Seudo Codigo
 ** Estructura semaforos para equipos
-   sem_cortar = 1
-   sem_mezclar = 0
-   sem_salar = 0
-   sem_agregar = 0
-   sem_empanar = 0
-   sem_cocinar = 0
-   sem_hornear = 0
-   sem_armar = 0
+   - sem_cortar = 1
+   - sem_mezclar = 0
+   - sem_salar = 0
+   - sem_agregar = 0
+   - sem_empanar = 0
+   - sem_cocinar = 0
+   - sem_hornear = 0
+   - sem_armar = 0
 
 ** Semaforos globales
    sem_sarten = 1
