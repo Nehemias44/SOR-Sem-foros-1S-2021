@@ -1,10 +1,10 @@
-cortar 2 dientes de ajo y perejil.
-mezclar ajo, perejil y huevo.
-salar ajo, perejil y huevo.
-agregar la carne.
+cortar ajo, perejil.
+mezclar ajo, perejil, huevo.
+salar ajo, perejil, huevo.
+agregar carne.
 empanar milanesa.
-cocinar en el sarten 5 minutos.
-hornear pan 10 minutos.
-cortar lechuga, tomate, cebolla morada, y pepino.
+cocinar milanesa.
+hornear pan.
+cortar lechuga, tomate, cebolla morada, pepino.
 armar sandwich. 
 
