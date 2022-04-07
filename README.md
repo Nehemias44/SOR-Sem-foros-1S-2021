@@ -31,21 +31,24 @@ v(sem_mezclar)  v(sem_salar)   v(sem_agregar) v(sem_empanar)  v(sem_cocinar)   v
 #include <fcntl.h>
 
 // Algoritmo
-        // Abro el archivo de la receta en modo lectura
+	// Abro el archivo de la receta
 	FILE *archivo = fopen("Receta.txt", "r");
 
-        // Valido el archivo
+	// Valido el archivo
 	if(!archivo) exit(EXIT_FAILURE);
-	// Inicio la variables necesarias para leer el contenido 
+	// Inicio los datos necesarios para leer el contenido
+	// *s es para recorrer y setear los datos tipo char[] de la estructura parametro
 	char *contenido = NULL, *s;
 	size_t longitud = 0;
+	// n es para iterar el arreglo pasos_param de la estructura parametro
+	// m es para iterar el arreglo pasos_param[n].ingredientes de la estructura parametro
 	int n = 0, m;
 	// leo linea por linea
 	while (getline(&contenido, &longitud, archivo) != -1) {
 		// Posiciono el puntero en el dato de la estructura 'parametro' que vamos a setear primero
 		s = pthread_data->pasos_param[n].accion;
 		m = 0;
-		// Recorro caracter por caracter de la linea hasta el final
+		// Recorro la linea caracter por caracter hasta el final
 		for(char *c = contenido; *c != '\0'; c++){
 			// Cargo los caracteres que me interesan
 			if (es_letra(*c)) {
@@ -61,4 +64,20 @@ v(sem_mezclar)  v(sem_salar)   v(sem_agregar) v(sem_empanar)  v(sem_cocinar)   v
 	// Cierro el archivo y libero el espacio de memoria del contenido
 	fclose(archivo);
 	free(contenido);
+```
+
+## Escribir salida (log) en un arichvo
+```
+// Definicion Global de puntero para el archivo  
+FILE *salida_log;
+// Abrir el archivo en modo de excritura
+salida_log = fopen("subwayArgento.log", "w"); 
+if (!salida_log) exit(EXIT_FAILURE);
+// Agregar las siguientes llamadas a la funcion "fprintf" en la funcion "imprimirAccion"
+// Para imprimir nombre de equipo y accion
+fprintf(salida_log, "\t%s %d %c %s %s  \n ", "Equipo", mydata->equipo_param, '-', "accion", mydata->pasos_param[i].accion);
+// Para imprimir nombre de equipo y titulo ingredientes
+fprintf(salida_log, "\t%s %d %s\n",          "Equipo", mydata->equipo_param, "----------ingredientes :-----------");
+// Para imprimir lista de ingredientes
+fprintf(salida_log, "\t%s %d %s %d : %s \n", "Equipo", mydata->equipo_param, "ingredientes",h,mydata->pasos_param[i].ingredientes[h]);
 ```

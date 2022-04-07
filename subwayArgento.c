@@ -37,16 +37,11 @@ FILE *salida_log;
 
 int es_letra(char c)
 {
-	return  (c >= 'a' && c <= 'z') ||
-		(c >= 'A' && c <= 'Z') ||
-		c == (char)165;
+	return  (c >= 'a' && c <= 'z') || c == (char)164 ||
+		(c >= 'A' && c <= 'Z') || c == (char)165;
 }
 
-int es_numero(char c) {
-	return c >= '0' && c <= '9';
-}
-
-//funcion para imprimir las acciones y los ingredientes de la accion
+//funcion para imprimir las acciones, los ingredientes de la accion y escribir la salido (log) en un archivo
 void* imprimirAccion(void *data, char *accionIn) {
 
 	struct parametro *mydata = data;
@@ -59,8 +54,8 @@ void* imprimirAccion(void *data, char *accionIn) {
 		//pregunto si la accion del array es igual a la pasada por parametro (si es igual la funcion strcmp devuelve cero)
 		if(strcmp(mydata->pasos_param[i].accion, accionIn) == 0){
 			printf("\tEquipo %d - accion %s \n " , mydata->equipo_param, mydata->pasos_param[i].accion);
-			fprintf(salida_log, "\t%s %d %c %s %s  \n ","Equipo", mydata->equipo_param, '-', "accion", 
-				 mydata->pasos_param[i].accion);
+			fprintf(salida_log, "\t%s %d %c %s %s  \n ",
+				"Equipo", mydata->equipo_param, '-', "accion", mydata->pasos_param[i].accion);
 			//calculo la longitud del array de ingredientes
 			int sizeArrayIngredientes = (int)( sizeof(mydata->pasos_param[i].ingredientes) /sizeof(mydata->pasos_param[i].ingredientes[0]) );
 			//indice para recorrer array de ingredientes
@@ -90,7 +85,7 @@ void* imprimirAccion(void *data, char *accionIn) {
 		imprimirAccion(mydata, accion);\
 		usleep( 200000 );}
 // pthread exit
-#define PEXIT return NULL
+#define PEXIT pthread_exit(NULL)
 // struct semaforos
 #define S(data) ((struct parametro*)data)->semaforos_param
 // wait 
@@ -98,15 +93,15 @@ void* imprimirAccion(void *data, char *accionIn) {
 // signal 
 #define V(sem) sem_post(&sem)
 // sincronizacion
-/*    funcion            /wait(sem)                               / zona critica      / signal(sem)                             / exit*/
-void* cortar (void *d) {                                          A("cortar",  d);    V(S(d).sem_mezclar);                      PEXIT; }
-void* mezclar(void *d) { P(S(d).sem_mezclar);                     A("mezclar", d);    V(S(d).sem_salar);                        PEXIT; }
-void* agregar(void *d) { P(S(d).sem_agregar);                     A("agregar", d);    V(S(d).sem_empanar);                      PEXIT; }
-void* empanar(void *d) { P(S(d).sem_empanar);                     A("cocinar", d);    V(S(d).sem_cocinar);                      PEXIT; }
-void* salar  (void *d) { P(S(d).sem_salar);    P(sem_salero);     A("salar",   d);    V(S(d).sem_agregar); V(sem_salero);       PEXIT; }
-void* cocinar(void *d) { P(S(d).sem_cocinar);  P(sem_sarten);     A("cocinar", d);    V(S(d).sem_armar);   V(sem_sarten);       PEXIT; }
-void* hornear(void *d) { P(S(d).sem_hornear);  P(sem_horno);      A("hornear", d);    V(S(d).sem_armar);   V(sem_horno);        PEXIT; }
-void* armar  (void *d) { P(S(d).sem_armar);    P(S(d).sem_armar); A("armar",   d);                                              PEXIT; } 
+/*    funcion            /wait(sem)                              / zona critica   / signal(sem)                       / exit*/
+void* cortar (void *d) {                                         A("cortar",  d); V(S(d).sem_mezclar);                PEXIT; }
+void* mezclar(void *d) { P(S(d).sem_mezclar);                    A("mezclar", d); V(S(d).sem_salar)  ;                PEXIT; }
+void* agregar(void *d) { P(S(d).sem_agregar);                    A("agregar", d); V(S(d).sem_empanar);                PEXIT; }
+void* empanar(void *d) { P(S(d).sem_empanar);                    A("cocinar", d); V(S(d).sem_cocinar);                PEXIT; }
+void* salar  (void *d) { P(S(d).sem_salar)  ; P(sem_salero)    ; A("salar",   d); V(S(d).sem_agregar); V(sem_salero); PEXIT; }
+void* cocinar(void *d) { P(S(d).sem_cocinar); P(sem_sarten)    ; A("cocinar", d); V(S(d).sem_armar)  ; V(sem_sarten); PEXIT; }
+void* hornear(void *d) { P(S(d).sem_hornear); P(sem_horno)     ; A("hornear", d); V(S(d).sem_armar)  ; V(sem_horno) ; PEXIT; }
+void* armar  (void *d) { P(S(d).sem_armar)  ; P(S(d).sem_armar); A("armar",   d);                                     PEXIT; } 
 
 void* ejecutarReceta(void *i) {
 	
@@ -152,19 +147,22 @@ void* ejecutarReceta(void *i) {
 
 	// Valido el archivo
 	if(!archivo) exit(EXIT_FAILURE);
-	// Inicio la variables necesarias para leer el contenido 
+	// Inicio los datos necesarios para leer el contenido
+	// *s es para recorrer y setear los datos tipo char[] de la estructura parametro
 	char *contenido = NULL, *s;
 	size_t longitud = 0;
+	// n es para iterar el arreglo pasos_param de la estructura parametro
+	// m es para iterar el arreglo pasos_param[n].ingredientes de la estructura parametro
 	int n = 0, m;
 	// leo linea por linea
 	while (getline(&contenido, &longitud, archivo) != -1) {
 		// Posiciono el puntero en el dato de la estructura 'parametro' que vamos a setear primero
 		s = pthread_data->pasos_param[n].accion;
 		m = 0;
-		// Recorro caracter por caracter de la linea hasta el final
+		// Recorro la linea caracter por caracter hasta el final
 		for(char *c = contenido; *c != '\0'; c++){
 			// Cargo los caracteres que me interesan
-			if (es_letra(*c) || es_numero(*c)) {
+			if (es_letra(*c)) {
 				*s = *c; s++;
 				// Cuando un caracter es SPC paso al siguiente dato
 			} else if (*c == ' ') {
@@ -258,7 +256,7 @@ void* ejecutarReceta(void *i) {
 	sem_destroy(&sem_hornear);
 	sem_destroy(&sem_armar);	
 	//salida del hilo
-	return NULL;
+	pthread_exit(NULL);
 }
 
 int main ()
