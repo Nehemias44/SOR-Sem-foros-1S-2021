@@ -83,7 +83,7 @@ fprintf(salida_log, "\t%s %d %s\n",          "Equipo", mydata->equipo_param, "--
 fprintf(salida_log, "\t%s %d %s %d : %s \n", "Equipo", mydata->equipo_param, "ingredientes",h,mydata->pasos_param[i].ingredientes[h]);
 ```
 
-## Codigo sincronizacion, reutilizacion de codigo
+## Sincronizacion, reutilizacion de codigo
 ```c
 // accion
 #define A(str, data){\
