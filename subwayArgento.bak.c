@@ -22,7 +22,9 @@ struct semaforos {
 
 //creo los pasos con los ingredientes
 struct paso {
-	char accion [LIMITE], ingredientes[10][LIMITE];   
+	char accion [LIMITE];
+	char ingredientes[10][LIMITE];
+   
 };
 
 //creo los parametros de los hilos 
@@ -31,9 +33,6 @@ struct parametro {
 	struct semaforos semaforos_param;
 	struct paso pasos_param[10];
 };
-
-sem_t sem_salero, sem_sarten, sem_horno, sem_escribir;
-FILE *salida_log;
 
 int es_letra(char c)
 {
@@ -48,65 +47,116 @@ int es_numero(char c) {
 
 //funcion para imprimir las acciones y los ingredientes de la accion
 void* imprimirAccion(void *data, char *accionIn) {
-
 	struct parametro *mydata = data;
 	//calculo la longitud del array de pasos 
 	int sizeArray = (int)( sizeof(mydata->pasos_param) / sizeof(mydata->pasos_param[0]));
 	//indice para recorrer array de pasos 
 	int i;
-	sem_wait(&sem_escribir);
 	for(i = 0; i < sizeArray; i ++){
 		//pregunto si la accion del array es igual a la pasada por parametro (si es igual la funcion strcmp devuelve cero)
 		if(strcmp(mydata->pasos_param[i].accion, accionIn) == 0){
 			printf("\tEquipo %d - accion %s \n " , mydata->equipo_param, mydata->pasos_param[i].accion);
-			fprintf(salida_log, "\t%s %d %c %s %s  \n ","Equipo", mydata->equipo_param, '-', "accion", 
-				 mydata->pasos_param[i].accion);
 			//calculo la longitud del array de ingredientes
 			int sizeArrayIngredientes = (int)( sizeof(mydata->pasos_param[i].ingredientes) /sizeof(mydata->pasos_param[i].ingredientes[0]) );
 			//indice para recorrer array de ingredientes
 			int h;
-			printf("\tEquipo %d -----------ingredientes : ----------\n",mydata->equipo_param);
-			fprintf(salida_log, "\t%s %d %s\n",
-				"Equipo", mydata->equipo_param, "----------ingredientes :-----------");
+			printf("\tEquipo %d -----------ingredientes : ----------\n",mydata->equipo_param); 
 			for(h = 0; h < sizeArrayIngredientes; h++) {
 				//consulto si la posicion tiene valor porque no se cuantos ingredientes tengo por accion 
 				if(strlen(mydata->pasos_param[i].ingredientes[h]) != 0) {
 					printf("\tEquipo %d ingrediente  %d : %s \n",
 					       mydata->equipo_param,h,mydata->pasos_param[i].ingredientes[h]);
-					fprintf(salida_log, "\t%s %d %s %d : %s \n", 
-						"Equipo", mydata->equipo_param, "ingredientes",h,mydata->pasos_param[i].ingredientes[h]);
 				}
 			}
 		}
 	}
-	sem_post(&sem_escribir);
 	return NULL;
 }
 
-// accion
-#define A(str, data){\
-		char *accion = str;\
-		struct parametro *mydata = data;\
-		imprimirAccion(mydata, accion);\
-		usleep( 200000 );}
-// pthread exit
-#define PEXIT return NULL
-// struct semaforos
-#define S(data) ((struct parametro*)data)->semaforos_param
-// wait 
-#define P(sem) sem_wait(&sem)
-// signal 
-#define V(sem) sem_post(&sem)
-// sincronizacion
-/*    funcion            /wait(sem)                               / zona critica      / signal(sem)                             / exit*/
-void* cortar (void *d) {                                          A("cortar",  d);    V(S(d).sem_mezclar);                      PEXIT; }
-void* mezclar(void *d) { P(S(d).sem_mezclar);                     A("mezclar", d);    V(S(d).sem_salar);                        PEXIT; }
-void* agregar(void *d) { P(S(d).sem_agregar);                     A("agregar", d);    V(S(d).sem_empanar);                      PEXIT; }
-void* empanar(void *d) { P(S(d).sem_empanar);                     A("cocinar", d);    V(S(d).sem_cocinar);                      PEXIT; }
-void* salar  (void *d) { P(S(d).sem_salar);    P(sem_salero);     A("salar",   d);    V(S(d).sem_agregar); V(sem_salero);       PEXIT; }
-void* cocinar(void *d) { P(S(d).sem_cocinar);  P(sem_sarten);     A("cocinar", d);    V(S(d).sem_armar);   V(sem_sarten);       PEXIT; }
-void* hornear(void *d) { P(S(d).sem_hornear);  P(sem_horno);      A("hornear", d);    V(S(d).sem_armar);   V(sem_horno);        PEXIT; }
-void* armar  (void *d) { P(S(d).sem_armar);    P(S(d).sem_armar); A("armar",   d);                                              PEXIT; } 
+//funcion para tomar de ejemplo
+void* cortar(void *data) {
+	//creo el nombre de la accion de la funcion 
+	char *accion = "cortar";
+	//creo el puntero para pasarle la referencia de memoria (data) del struct pasado por parametro (la cual es un puntero). 
+	struct parametro *mydata = data;
+	//llamo a la funcion imprimir le paso el struct y la accion de la funcion
+	imprimirAccion(mydata,accion);
+	//uso sleep para simular que que pasa tiempo
+	usleep( 200000 );
+	//doy la señal a la siguiente accion (cortar me habilita mezclar)
+	sem_post(&mydata->semaforos_param.sem_mezclar);
+	pthread_exit(NULL);
+}
+
+void* mezclar(void *data) {
+	char *accion = "mezclar";
+	struct parametro *mydata = data;
+	sem_wait(&mydata->semaforos_param.sem_mezclar);
+	imprimirAccion(mydata, accion);
+	usleep(200000);
+	sem_post(&mydata->semaforos_param.sem_salar);
+	pthread_exit(NULL);
+}
+
+void* salar(void *data) {
+	char *accion = "salar";
+	struct parametro *mydata = data;
+	sem_wait(&mydata->semaforos_param.sem_salar);
+	imprimirAccion(mydata, accion);
+	usleep(200000);
+	sem_post(&mydata->semaforos_param.sem_agregar);
+	pthread_exit(NULL);
+}
+
+void* agregar(void *data) {
+	char *accion = "agregar";
+	struct parametro *mydata = data;
+	sem_wait(&mydata->semaforos_param.sem_agregar);
+	imprimirAccion(mydata, accion);
+	usleep(200000);
+	sem_post(&mydata->semaforos_param.sem_empanar);
+	pthread_exit(NULL);
+}
+
+void* empanar(void *data) {
+	char *accion = "empanar";
+	struct parametro *mydata = data;
+	sem_wait(&mydata->semaforos_param.sem_empanar);
+	imprimirAccion(mydata, accion);
+	usleep(200000);
+	sem_post(&mydata->semaforos_param.sem_cocinar);
+	pthread_exit(NULL);
+}
+
+void* cocinar(void *data) {
+	char *accion = "cocinar";
+	struct parametro *mydata = data;
+	sem_wait(&mydata->semaforos_param.sem_cocinar);
+	imprimirAccion(mydata, accion);
+	usleep(200000);
+	sem_post(&mydata->semaforos_param.sem_armar);
+	pthread_exit(NULL);
+}
+
+void* hornear(void *data) {
+	char *accion = "hornear";
+	struct parametro *mydata = data;
+	sem_wait(&mydata->semaforos_param.sem_hornear);
+	imprimirAccion(mydata, accion);
+	usleep(200000);
+	sem_post(&mydata->semaforos_param.sem_armar);
+	pthread_exit(NULL);
+}
+
+void* armar(void *data) {
+	char *accion = "armar";
+	struct parametro *mydata = data;
+	sem_wait(&mydata->semaforos_param.sem_armar);
+	sem_wait(&mydata->semaforos_param.sem_armar);
+	imprimirAccion(mydata, accion);
+	usleep(200000);
+	pthread_exit(NULL);
+}
 
 void* ejecutarReceta(void *i) {
 	
@@ -140,12 +190,12 @@ void* ejecutarReceta(void *i) {
 	//seteo semaforos
 	pthread_data->semaforos_param.sem_mezclar = sem_mezclar;
 	//setear demas semaforos al struct aqui
-	pthread_data->semaforos_param.sem_salar   = sem_salar;
-	pthread_data->semaforos_param.sem_agregar = sem_agregar;		
+	pthread_data->semaforos_param.sem_salar = sem_salar;
+	pthread_data->semaforos_param.sem_agregar= sem_agregar;		
 	pthread_data->semaforos_param.sem_empanar = sem_empanar;
 	pthread_data->semaforos_param.sem_cocinar = sem_cocinar;
 	pthread_data->semaforos_param.sem_hornear = sem_hornear; 
-	pthread_data->semaforos_param.sem_armar   = sem_armar;	
+	pthread_data->semaforos_param.sem_armar = sem_armar;	
 
 	// Abro el archivo de la receta
 	FILE *archivo = fopen("Receta.txt", "r");
@@ -177,7 +227,20 @@ void* ejecutarReceta(void *i) {
 	// Cierro el archivo y libero el espacio de memoria del contenido
 	fclose(archivo);
 	free(contenido);
-		
+	
+
+	//seteo las acciones y los ingredientes (Faltan acciones e ingredientes) ¿Se ve hardcodeado no? ¿Les parece bien?
+     	/* strcpy(pthread_data->pasos_param[0].accion, "cortar"); */
+	/* strcpy(pthread_data->pasos_param[0].ingredientes[0], "ajo"); */
+	/* strcpy(pthread_data->pasos_param[0].ingredientes[1], "perejil"); */
+
+
+	/* strcpy(pthread_data->pasos_param[1].accion, "mezclar"); */
+	/* strcpy(pthread_data->pasos_param[1].ingredientes[0], "ajo"); */
+	/* strcpy(pthread_data->pasos_param[1].ingredientes[1], "perejil"); */
+	/* strcpy(pthread_data->pasos_param[1].ingredientes[2], "huevo"); */
+	/* strcpy(pthread_data->pasos_param[1].ingredientes[3], "carne"); */	
+	
 	//inicializo los semaforos
 	sem_init(&(pthread_data->semaforos_param.sem_mezclar),0,0);
 	//inicializar demas semaforos aqui
@@ -258,16 +321,12 @@ void* ejecutarReceta(void *i) {
 	sem_destroy(&sem_hornear);
 	sem_destroy(&sem_armar);	
 	//salida del hilo
-	return NULL;
+	pthread_exit(NULL);
 }
+
 
 int main ()
 {
-	sem_init(&sem_salero, 0, 1);
-	sem_init(&sem_sarten, 0, 1);
-	sem_init(&sem_horno, 0, 1);
-	sem_init(&sem_escribir, 0, 1);
-
 	//creo los nombres de los equipos 
 	int rc;
 	int *equipoNombre1 =malloc(sizeof(*equipoNombre1));
@@ -286,10 +345,7 @@ int main ()
 	pthread_t equipo2;
 	pthread_t equipo3; 
 	pthread_t equipo4;
- 
-	salida_log = fopen("subwayArgento.log", "w"); 
-	if (!salida_log) exit(EXIT_FAILURE);
- 
+  
 	//inicializo los hilos de los equipos
 	rc = pthread_create(&equipo1,                      //identificador unico
                             NULL,                          //atributos del thread
@@ -319,9 +375,8 @@ int main ()
 	pthread_join (equipo2,NULL);
 	pthread_join (equipo3,NULL);
 	pthread_join (equipo4,NULL);
-	
+
 	pthread_exit(NULL);
-	fclose(salida_log);
 }
 
 //Para compilar:   gcc subwayArgento.c -o ejecutable -lpthread
