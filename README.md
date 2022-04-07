@@ -25,7 +25,7 @@ v(sem_mezclar)  v(sem_salar)   v(sem_agregar) v(sem_empanar)  v(sem_cocinar)   v
                                                                                v(sem_sarten)    v(sem_horno)
 ```
 ## Lectura receta, seteo de acciones e ingredientes 
-```
+```c
 // Librerias
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -67,7 +67,7 @@ v(sem_mezclar)  v(sem_salar)   v(sem_agregar) v(sem_empanar)  v(sem_cocinar)   v
 ```
 
 ## Escribir salida (log) en un arichvo
-```
+```c
 // Definicion Global de puntero para el archivo  
 FILE *salida_log;
 // Abrir el archivo en modo de excritura
