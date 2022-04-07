@@ -1,7 +1,7 @@
 # Sistemas Operativos y Redes
 Trabajo Práctico Semáforos primer semestre año 2021
 
-## Seudo codigo sincronizacion
+## Seudo codigo
 ```
 # Semaforos globales
 sem_salero = 1
