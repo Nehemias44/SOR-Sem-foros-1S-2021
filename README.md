@@ -74,10 +74,10 @@ FILE *salida_log;
 salida_log = fopen("subwayArgento.log", "w"); 
 if (!salida_log) exit(EXIT_FAILURE);
 // Agregar las siguientes llamadas a la funcion "fprintf" en la funcion "imprimirAccion"
-// Para imprimir nombre de equipo y accion
+// Para escribir en el archivo nombre de equipo y accion
 fprintf(salida_log, "\t%s %d %c %s %s  \n ", "Equipo", mydata->equipo_param, '-', "accion", mydata->pasos_param[i].accion);
-// Para imprimir nombre de equipo y titulo ingredientes
+// Para escribir en el archivo nombre de equipo y titulo ingredientes
 fprintf(salida_log, "\t%s %d %s\n",          "Equipo", mydata->equipo_param, "----------ingredientes :-----------");
-// Para imprimir lista de ingredientes
+// Para escribir en el archivo lista de ingredientes
 fprintf(salida_log, "\t%s %d %s %d : %s \n", "Equipo", mydata->equipo_param, "ingredientes",h,mydata->pasos_param[i].ingredientes[h]);
 ```
